@@ -35,7 +35,6 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
     private String input;
 
     private ColorStateList mHighLightColor, mTextColor;
-//    private List<PopupTextBean> mSourceDatas;
     private OnPopupItemClickListener mListener;
 
     public KMPAutoComplTextView(Context context) {
@@ -80,6 +79,11 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
             }
         });
 
+    }
+
+    public void requestDropdownOpen() {
+        if (getText() != null && !TextUtils.isEmpty(getText().toString()))
+            onInputTextChanged(getText().toString());
     }
 
     private void onInputTextChanged(String input) {
