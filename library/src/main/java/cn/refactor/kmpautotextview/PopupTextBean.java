@@ -2,7 +2,7 @@ package cn.refactor.kmpautotextview;
 
 import java.io.Serializable;
 
-public class PopupTextBean implements Serializable {
+public class PopupTextBean implements Serializable, Comparable<PopupTextBean> {
     public String mTarget;
     public int mStartIndex = -1;
     public int mEndIndex = -1;
@@ -23,5 +23,10 @@ public class PopupTextBean implements Serializable {
         this.mTarget = target;
         this.mStartIndex = startIndex;
         this.mEndIndex = endIndex;
+    }
+
+    @Override
+    public int compareTo(PopupTextBean popupTextBean) {
+        return mTarget.compareTo(popupTextBean.mTarget);
     }
 }

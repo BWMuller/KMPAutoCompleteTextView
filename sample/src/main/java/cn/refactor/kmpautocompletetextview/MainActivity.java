@@ -1,12 +1,14 @@
 package cn.refactor.kmpautocompletetextview;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.refactor.kmpautotextview.KMPAdapter;
 import cn.refactor.kmpautotextview.KMPAutoComplTextView;
 
 
@@ -27,8 +29,11 @@ public class MainActivity extends AppCompatActivity {
         data.add("Red roses for wedding");
         data.add("Bouquet with red roses");
         data.add("Single red rose flower");
+        data.add("Red roses for wedding");
+        data.add("Bouquet with red roses");
+        data.add("Single red rose flower");
 
-        KMPAutoComplTextView complTextView = (KMPAutoComplTextView) findViewById(R.id.tvAutoCompl);
+        final KMPAutoComplTextView complTextView = (KMPAutoComplTextView) findViewById(R.id.tvAutoCompl);
         complTextView.setDatas(data);
         complTextView.setOnPopupItemClickListener(new KMPAutoComplTextView.OnPopupItemClickListener() {
             @Override
@@ -36,6 +41,24 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, charSequence.toString(), Toast.LENGTH_SHORT).show();
             }
         });
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                List<String> data = new ArrayList<String>();
+                data.add("Black roses for funerals");
+                data.add("Bouquet without red roses");
+                data.add("Single red rose flower");
+                data.add("Single red rose bouquets");
+                data.add("Single red rose flower pots");
+                data.add("Black roses for funerals");
+                data.add("Bouquet without red roses");
+                data.add("Single red rose flower");
+                data.add("Single red rose bouquets");
+                data.add("Single red rose flower pots");
+                ((KMPAdapter) complTextView.getAdapter()).addAll(data);
+            }
+        }, 30000);
 
     }
 

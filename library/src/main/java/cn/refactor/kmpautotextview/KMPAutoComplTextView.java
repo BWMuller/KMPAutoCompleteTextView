@@ -5,20 +5,14 @@ import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.text.Editable;
-import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
-import android.widget.BaseAdapter;
-import android.widget.Filter;
 import android.widget.Filterable;
-import android.widget.TextView;
+import android.widget.ListAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,16 +25,17 @@ import java.util.List;
  */
 public class KMPAutoComplTextView extends AutoCompleteTextView {
 
-    private static final int DEFAULT_HIGHLIGHT       = Color.parseColor("#FF4081");
-    private static final int DEFAULT_TEXTCOLOR       = Color.parseColor("#80000000");
+    private static final int DEFAULT_HIGHLIGHT = Color.parseColor("#FF4081");
+    private static final int DEFAULT_TEXTCOLOR = Color.parseColor("#80000000");
     private static final int DEFAULT_TEXT_PIXEL_SIZE = 14;
 
     private float mTextSize;
     private boolean mIsIgnoreCase;
     private KMPAdapter mAdapter;
+    private String input;
 
     private ColorStateList mHighLightColor, mTextColor;
-    private List<PopupTextBean> mSourceDatas, mTempDatas;
+//    private List<PopupTextBean> mSourceDatas;
     private OnPopupItemClickListener mListener;
 
     public KMPAutoComplTextView(Context context) {
@@ -90,26 +85,22 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
     private void onInputTextChanged(String input) {
         matchResult(input);
 
-        if (mAdapter.mList.size() == 0) {
+        if (mAdapter.getCount() == 0) {
             KMPAutoComplTextView.this.dismissDropDown();
             return;
         }
         mAdapter.notifyDataSetChanged();
 
-        if (!KMPAutoComplTextView.this.isPopupShowing() || mAdapter.mList.size() > 0) {
+        if (!KMPAutoComplTextView.this.isPopupShowing() || mAdapter.getCount() > 0) {
             showDropDown();
         }
-
     }
 
-    /**
-     * 设置数据集
-     *
-     * @param strings
-     */
-    public void setDatas(final List<String> strings) {
-        mAdapter = new KMPAdapter(getContext(), getResultDatas(strings));
-        setAdapter(mAdapter);
+    @Override
+    public <T extends ListAdapter & Filterable> void setAdapter(T adapter) {
+        mAdapter = (KMPAdapter) adapter;
+        mAdapter.init(this, mTextSize, mTextColor, mHighLightColor);
+        super.setAdapter(adapter);
     }
 
     public void setOnPopupItemClickListener(OnPopupItemClickListener listener) {
@@ -126,8 +117,13 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
 
     }
 
-    private void matchResult(String input) {
-        List<PopupTextBean> datas = mSourceDatas;
+    protected void matchResult() {
+        matchResult(input);
+    }
+
+    protected void matchResult(String input) {
+        this.input = input;
+        List<PopupTextBean> datas = getResultDatas();
         if (TextUtils.isEmpty(input) || datas == null || datas.size() == 0) {
             return;
         }
@@ -143,28 +139,39 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
             }
         }
 
-        mTempDatas = new ArrayList<PopupTextBean>();
-        mTempDatas.clear();
-        mTempDatas.addAll(newDatas);
+        mAdapter.setTempDatas(newDatas);
 
-        mAdapter.mList.clear();
-        mAdapter.mList.addAll(newDataStrings);
+        mAdapter.clear();
+        mAdapter.addAllItems(newDataStrings);
     }
 
 
-    private List<String> getResultDatas(List<String> strings) {
-        if (strings == null || strings.size() == 0) {
+    /**
+     * 设置数据集
+     *
+     * @param strings
+     */
+    public void setDatas(List<String> strings) {
+        if (mAdapter == null) {
+            mAdapter = new KMPAdapter(getContext(), 0, strings);
+            setAdapter(mAdapter);
+        } else {
+            mAdapter.clear();
+            mAdapter.addAll(strings);
+        }
+    }
+
+    private List<PopupTextBean> getResultDatas() {
+        if (mAdapter == null || mAdapter.getItemCount() == 0) {
             return null;
         }
 
         List<PopupTextBean> list = new ArrayList<PopupTextBean>();
-        for (String target : strings) {
-            list.add(new PopupTextBean(target));
+        for (int i = 0; i < mAdapter.getItemCount(); i++) {
+            list.add(new PopupTextBean(mAdapter.getItemForPosition(i)));
         }
 
-        mSourceDatas = new ArrayList<PopupTextBean>();
-        mSourceDatas.addAll(list);
-        return strings;
+        return list;
     }
 
     public void setMatchIgnoreCase(boolean ignoreCase) {
@@ -173,102 +180,6 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
 
     public boolean getMatchIgnoreCase() {
         return mIsIgnoreCase;
-    }
-
-    class KMPAdapter extends BaseAdapter implements Filterable {
-        private List<String> mList;
-        private Context mContext;
-        private MyFilter mFilter;
-
-        public KMPAdapter(Context context, List<String> list) {
-            mContext = context;
-            mList = new ArrayList<String>();
-            mList.addAll(list);
-        }
-
-        @Override
-        public int getCount() {
-            return mList == null ? 0 : mList.size();
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return mList == null ? null : mList.get(position);
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ViewHolder holder = null;
-            if (convertView == null) {
-                holder = new ViewHolder();
-                TextView tv = new TextView(mContext);
-                int paddingX = DisplayUtils.dp2px(getContext(), 10.0f);
-                int paddingY = DisplayUtils.dp2px(getContext(), 5.0f);
-                tv.setPadding(paddingX, paddingY, paddingX, paddingY);
-
-                holder.tv = tv;
-                convertView = tv;
-                convertView.setTag(holder);
-            } else {
-                holder = (ViewHolder) convertView.getTag();
-            }
-
-            PopupTextBean bean = mTempDatas.get(position);
-            SpannableString ss = new SpannableString(bean.mTarget);
-            holder.tv.setTextColor(mTextColor == null ? DEFAULT_TEXTCOLOR : mTextColor.getDefaultColor());
-            holder.tv.setTextSize(mTextSize == 0 ? DEFAULT_TEXT_PIXEL_SIZE : DisplayUtils.px2sp(getContext(), mTextSize));
-
-            // Change Highlight Color
-            if (-1 != bean.mStartIndex) {
-                ss.setSpan(new ForegroundColorSpan(mHighLightColor == null ? DEFAULT_HIGHLIGHT : mHighLightColor.getDefaultColor()),
-                        bean.mStartIndex, bean.mEndIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                holder.tv.setText(ss);
-            } else {
-                holder.tv.setText(bean.mTarget);
-            }
-
-            return convertView;
-        }
-
-        @Override
-        public Filter getFilter() {
-            if (mFilter == null) {
-                mFilter = new MyFilter();
-            }
-            return mFilter;
-        }
-
-        private class ViewHolder {
-            TextView tv;
-        }
-
-        private class MyFilter extends Filter {
-
-            @Override
-            protected FilterResults performFiltering(CharSequence constraint) {
-                FilterResults results = new FilterResults();
-                if (mList == null) {
-                    mList = new ArrayList<String>();
-                }
-                results.values = mList;
-                results.count = mList.size();
-                return results;
-            }
-
-            @Override
-            protected void publishResults(CharSequence constraint, FilterResults results) {
-                if (results.count > 0) {
-                    notifyDataSetChanged();
-                } else {
-                    notifyDataSetInvalidated();
-                }
-            }
-        }
     }
 
     public interface OnPopupItemClickListener {
@@ -288,8 +199,8 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
         int j = -1;
         while (i < mode.length - 1) {
             if (j == -1 || mode[i] == mode[j]) {
-                i ++;
-                j ++;
+                i++;
+                j++;
                 if (mode[i] != mode[j]) {
                     next[i] = j;
                 } else {
@@ -319,15 +230,15 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
         while (i <= sourceArr.length - 1 && j <= modeArr.length - 1) {
             if (isIgnoreCase) {
                 if (j == -1 || sourceArr[i] == modeArr[j] || String.valueOf(sourceArr[i]).equalsIgnoreCase(String.valueOf(modeArr[j]))) {
-                    i ++;
-                    j ++;
+                    i++;
+                    j++;
                 } else {
                     j = next[j];
                 }
             } else {
                 if (j == -1 || sourceArr[i] == modeArr[j]) {
-                    i ++;
-                    j ++;
+                    i++;
+                    j++;
                 } else {
                     j = next[j];
                 }
@@ -338,5 +249,4 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
         } else
             return i - modeArr.length; // 返回模式串在主串中的头下标
     }
-
 }
