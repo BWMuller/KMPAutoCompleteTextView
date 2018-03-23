@@ -18,7 +18,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.TreeSet;
 
 /**
  * Created by Bernhard Müller on 9/1/2016.
@@ -29,11 +28,11 @@ public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
     private static final int DEFAULT_TEXT_PIXEL_SIZE = 14;
 
     private Context mContext;
-    TreeSet<PopupTextBean> mTempDatas;
+    private KMPBeanSet mTempDatas;
     private float mTextSize;
     private ColorStateList mHighLightColor, mTextColor;
     private HashSet<String> mItems;
-    Filter mFilter;
+    private Filter mFilter;
     private KMPAutoComplTextView mKMPAutoComplTextView;
 
 
@@ -41,7 +40,7 @@ public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
         super(context, resource, 0, items);
         mContext = context;
         mItems = new HashSet<>(items);
-        mTempDatas = new TreeSet<>();
+        mTempDatas = KMPBeanSet.create();
         getFilter().filter("");
     }
 
@@ -81,7 +80,7 @@ public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
 
     @Override
     public String getItem(int position) {
-        return new ArrayList<>(mTempDatas).get(position).mTarget;
+        return mTempDatas.get(position).mTarget;
     }
 
     public String getItemForPosition(int position) {
@@ -89,12 +88,12 @@ public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
     }
 
     public PopupTextBean get(int position) {
-        return new ArrayList<>(mTempDatas).get(position);
+        return mTempDatas.get(position);
     }
 
     @Override
     public int getPosition(String item) {
-        return new ArrayList<>(mTempDatas).indexOf(item);
+        return mTempDatas.indexOf(item);
     }
 
     @Override
@@ -136,8 +135,9 @@ public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
         return convertView;
     }
 
-    public void setTempDatas(List<PopupTextBean> newDatas) {
-        mTempDatas = new TreeSet<>();
+    public void setTempDatas(KMPBeanSet newDatas) {
+        if (mTempDatas == null)
+            mTempDatas = KMPBeanSet.create();
         mTempDatas.clear();
         mTempDatas.addAll(newDatas);
     }
@@ -154,16 +154,16 @@ public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
         mItems.addAll(collection);
     }
 
-    private class ViewHolder {
-        TextView tv;
-    }
-
     @Override
     public Filter getFilter() {
         if (mFilter == null) {
             mFilter = new MyFilter();
         }
         return mFilter;
+    }
+
+    private class ViewHolder {
+        TextView tv;
     }
 
     private class MyFilter extends Filter {

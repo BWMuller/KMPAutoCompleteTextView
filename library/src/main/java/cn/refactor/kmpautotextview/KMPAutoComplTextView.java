@@ -36,6 +36,7 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
 
     private ColorStateList mHighLightColor, mTextColor;
     private OnPopupItemClickListener mListener;
+    private boolean mShowCurrentTextAsOption;
 
     public KMPAutoComplTextView(Context context) {
         this(context, null);
@@ -48,6 +49,33 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
     public KMPAutoComplTextView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context, attrs);
+    }
+
+    /**
+     * 获得字符串的next函数值
+     *
+     * @param mode 字符串
+     * @return next函数值
+     */
+    private static int[] next(char[] mode) {
+        int[] next = new int[mode.length];
+        next[0] = -1;
+        int i = 0;
+        int j = -1;
+        while (i < mode.length - 1) {
+            if (j == -1 || mode[i] == mode[j]) {
+                i++;
+                j++;
+                if (mode[i] != mode[j]) {
+                    next[i] = j;
+                } else {
+                    next[i] = next[j];
+                }
+            } else {
+                j = next[j];
+            }
+        }
+        return next;
     }
 
     private void init(Context context, AttributeSet attrs) {
@@ -127,19 +155,28 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
 
     protected void matchResult(String input) {
         this.input = input;
-        List<PopupTextBean> datas = getResultDatas();
-        if (TextUtils.isEmpty(input) || datas == null || datas.size() == 0) {
+        List<PopupTextBean> resultDatas = getResultDatas();
+        if (TextUtils.isEmpty(input) || resultDatas == null || resultDatas.size() == 0) {
             return;
         }
 
-        List<PopupTextBean> newDatas = new ArrayList<PopupTextBean>();
+        List<PopupTextBean> listDatas = new ArrayList<PopupTextBean>();
         List<String> newDataStrings = new ArrayList<String>();
-        for (PopupTextBean resultBean : datas) {
+        for (PopupTextBean resultBean : resultDatas) {
             int matchIndex = matchString(resultBean.mTarget, input, mIsIgnoreCase);
             if (-1 != matchIndex) {
                 PopupTextBean bean = new PopupTextBean(resultBean.mTarget, matchIndex, matchIndex + input.length());
-                newDatas.add(bean);
+                listDatas.add(bean);
                 newDataStrings.add(resultBean.mTarget);
+            }
+        }
+        KMPBeanSet newDatas = KMPBeanSet.create();
+        newDatas.addAll(listDatas);
+        if (mShowCurrentTextAsOption && !newDataStrings.contains(input)) {
+            int matchIndex = matchString(input, input, mIsIgnoreCase);
+            if (-1 != matchIndex) {
+                PopupTextBean bean = new PopupTextBean(input, matchIndex, matchIndex + input.length());
+                newDatas.setActiveText(bean);
             }
         }
 
@@ -149,6 +186,13 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
         mAdapter.addAllItems(newDataStrings);
     }
 
+    public boolean isShowCurrentTextAsOption() {
+        return mShowCurrentTextAsOption;
+    }
+
+    public void setShowCurrentTextAsOption(boolean showCurrentTextAsOption) {
+        this.mShowCurrentTextAsOption = showCurrentTextAsOption;
+    }
 
     /**
      * 设置数据集
@@ -178,43 +222,12 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
         return list;
     }
 
-    public void setMatchIgnoreCase(boolean ignoreCase) {
-        mIsIgnoreCase = ignoreCase;
-    }
-
     public boolean getMatchIgnoreCase() {
         return mIsIgnoreCase;
     }
 
-    public interface OnPopupItemClickListener {
-        void onPopupItemClick(CharSequence charSequence);
-    }
-
-    /**
-     * 获得字符串的next函数值
-     *
-     * @param mode 字符串
-     * @return next函数值
-     */
-    private static int[] next(char[] mode) {
-        int[] next = new int[mode.length];
-        next[0] = -1;
-        int i = 0;
-        int j = -1;
-        while (i < mode.length - 1) {
-            if (j == -1 || mode[i] == mode[j]) {
-                i++;
-                j++;
-                if (mode[i] != mode[j]) {
-                    next[i] = j;
-                } else {
-                    next[i] = next[j];
-                }
-            } else {
-                j = next[j];
-            }
-        }
-        return next;
+    public void setMatchIgnoreCase(boolean ignoreCase) {
+        mIsIgnoreCase = ignoreCase;
     }
 
     /**
@@ -252,5 +265,9 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
             return -1;
         } else
             return i - modeArr.length; // 返回模式串在主串中的头下标
+    }
+
+    public interface OnPopupItemClickListener {
+        void onPopupItemClick(CharSequence charSequence);
     }
 }

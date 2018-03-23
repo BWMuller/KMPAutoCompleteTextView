@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
 
         final KMPAutoComplTextView complTextView = (KMPAutoComplTextView) findViewById(R.id.tvAutoCompl);
         complTextView.setDatas(data);
+        complTextView.setShowCurrentTextAsOption(true);
         complTextView.setOnPopupItemClickListener(new KMPAutoComplTextView.OnPopupItemClickListener() {
             @Override
             public void onPopupItemClick(CharSequence charSequence) {
