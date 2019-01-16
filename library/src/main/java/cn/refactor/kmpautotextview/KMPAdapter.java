@@ -22,44 +22,46 @@ import java.util.List;
 /**
  * Created by Bernhard Müller on 9/1/2016.
  */
-public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
+public class KMPAdapter extends ArrayAdapter<Object> implements Filterable {
     private static final int DEFAULT_HIGHLIGHT = Color.parseColor("#FF4081");
     private static final int DEFAULT_TEXTCOLOR = Color.parseColor("#80000000");
     private static final int DEFAULT_TEXT_PIXEL_SIZE = 14;
 
     private Context mContext;
     private KMPBeanSet mTempDatas;
+    private KMPBeanSet mPreviousTempDatas;
     private float mTextSize;
     private ColorStateList mHighLightColor, mTextColor;
-    private HashSet<String> mItems;
+    private HashSet<Object> mItems;
     private Filter mFilter;
     private KMPAutoComplTextView mKMPAutoComplTextView;
 
 
-    public KMPAdapter(Context context, int resource, List<String> items) {
+    public KMPAdapter(Context context, int resource, List<Object> items) {
         super(context, resource, 0, items);
         mContext = context;
         mItems = new HashSet<>(items);
         mTempDatas = KMPBeanSet.create();
+        mPreviousTempDatas = KMPBeanSet.create();
         getFilter().filter("");
     }
 
     @Override
-    public void add(String object) {
+    public void add(Object object) {
         super.add(object);
         mItems.add(object);
         getFilter().filter("");
     }
 
     @Override
-    public void addAll(Collection<? extends String> collection) {
+    public void addAll(Collection<? extends Object> collection) {
         super.addAll(collection);
         mItems.addAll(collection);
         getFilter().filter("");
     }
 
     @Override
-    public void addAll(String... items) {
+    public void addAll(Object... items) {
         super.addAll(items);
         Collections.addAll(this.mItems, items);
         getFilter().filter("");
@@ -79,11 +81,15 @@ public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
     }
 
     @Override
-    public String getItem(int position) {
+    public Object getItem(int position) {
         return mTempDatas.get(position).mTarget;
     }
 
-    public String getItemForPosition(int position) {
+    public Object getPreviousItem(int position) {
+        return mPreviousTempDatas.get(position).mTarget;
+    }
+
+    public Object getItemForPosition(int position) {
         return new ArrayList<>(mItems).get(position);
     }
 
@@ -92,7 +98,7 @@ public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
     }
 
     @Override
-    public int getPosition(String item) {
+    public int getPosition(Object item) {
         return mTempDatas.indexOf(item);
     }
 
@@ -113,13 +119,16 @@ public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
 
             holder.tv = tv;
             convertView = tv;
-            convertView.setTag(holder);
+            convertView.setTag(R.id.adapter_viewholder, holder);
         } else {
-            holder = (ViewHolder) convertView.getTag();
+            holder = (ViewHolder) convertView.getTag(R.id.adapter_viewholder);
         }
 
+
         PopupTextBean bean = get(position);
-        SpannableString ss = new SpannableString(bean.mTarget);
+        convertView.setTag(R.id.adapter_item, bean);
+
+        SpannableString ss = new SpannableString(bean.mTarget.toString());
         holder.tv.setTextColor(mTextColor == null ? DEFAULT_TEXTCOLOR : mTextColor.getDefaultColor());
         holder.tv.setTextSize(mTextSize == 0 ? DEFAULT_TEXT_PIXEL_SIZE : DisplayUtils.px2sp(getContext(), mTextSize));
 
@@ -129,7 +138,7 @@ public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
                     bean.mStartIndex, bean.mEndIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             holder.tv.setText(ss);
         } else {
-            holder.tv.setText(bean.mTarget);
+            holder.tv.setText(bean.mTarget.toString());
         }
 
         return convertView;
@@ -138,6 +147,10 @@ public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
     public void setTempDatas(KMPBeanSet newDatas) {
         if (mTempDatas == null)
             mTempDatas = KMPBeanSet.create();
+        if (mPreviousTempDatas == null)
+            mPreviousTempDatas = KMPBeanSet.create();
+        mPreviousTempDatas.addAll(mTempDatas);
+
         mTempDatas.clear();
         mTempDatas.addAll(newDatas);
     }
@@ -149,7 +162,7 @@ public class KMPAdapter extends ArrayAdapter<String> implements Filterable {
         mTextColor = textColor;
     }
 
-    public void addAllItems(List<String> collection) {
+    public void addAllItems(List<Object> collection) {
         super.addAll(collection);
         mItems.addAll(collection);
     }

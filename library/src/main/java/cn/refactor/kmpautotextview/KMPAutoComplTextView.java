@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.support.annotation.Nullable;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -143,7 +144,17 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
                 if (mListener == null) {
                     return;
                 }
-                mListener.onPopupItemClick(KMPAutoComplTextView.this.getText().toString());
+
+                Object item = null;
+                try {
+                    if (mShowCurrentTextAsOption && position == 0) {
+                        //Ignoring item so that it is clear that this is the current text item
+                    } else {
+                        item = view.getTag(R.id.adapter_item);
+                    }
+                } catch(Throwable ignored) {
+                }
+                mListener.onPopupItemClick(item, KMPAutoComplTextView.this.getText().toString());
             }
         });
 
@@ -161,9 +172,9 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
         }
 
         List<PopupTextBean> listDatas = new ArrayList<PopupTextBean>();
-        List<String> newDataStrings = new ArrayList<String>();
+        List<Object> newDataStrings = new ArrayList<Object>();
         for (PopupTextBean resultBean : resultDatas) {
-            int matchIndex = matchString(resultBean.mTarget, input, mIsIgnoreCase);
+            int matchIndex = matchString(resultBean.mTarget.toString(), input, mIsIgnoreCase);
             if (-1 != matchIndex) {
                 PopupTextBean bean = new PopupTextBean(resultBean.mTarget, matchIndex, matchIndex + input.length());
                 listDatas.add(bean);
@@ -172,11 +183,21 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
         }
         KMPBeanSet newDatas = KMPBeanSet.create();
         newDatas.addAll(listDatas);
-        if (mShowCurrentTextAsOption && !newDataStrings.contains(input)) {
-            int matchIndex = matchString(input, input, mIsIgnoreCase);
-            if (-1 != matchIndex) {
-                PopupTextBean bean = new PopupTextBean(input, matchIndex, matchIndex + input.length());
-                newDatas.setActiveText(bean);
+        if (mShowCurrentTextAsOption) {
+            boolean found = false;
+            for (Object item : newDataStrings) {
+                if (item.toString().equalsIgnoreCase(input)) {
+                    found = true;
+                }
+            }
+            if (!found) {
+                int matchIndex = matchString(input, input, mIsIgnoreCase);
+                if (-1 != matchIndex) {
+                    PopupTextBean bean = new PopupTextBean(input, matchIndex, matchIndex + input.length());
+                    newDatas.setActiveText(bean);
+                }
+            } else {
+
             }
         }
 
@@ -197,15 +218,15 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
     /**
      * 设置数据集
      *
-     * @param strings
+     * @param dataItems
      */
-    public void setDatas(List<String> strings) {
+    public void setDatas(List<Object> dataItems) {
         if (mAdapter == null) {
-            mAdapter = new KMPAdapter(getContext(), 0, strings);
+            mAdapter = new KMPAdapter(getContext(), 0, dataItems);
             setAdapter(mAdapter);
         } else {
             mAdapter.clear();
-            mAdapter.addAll(strings);
+            mAdapter.addAll(dataItems);
         }
     }
 
@@ -268,6 +289,12 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
     }
 
     public interface OnPopupItemClickListener {
-        void onPopupItemClick(CharSequence charSequence);
+
+        /**
+         *
+         * @param item Nullable item. If null then its the current text item. Otherwise it should be the item as put into this auto complete
+         * @param charSequence The text that is associated to this item
+         */
+        void onPopupItemClick(@Nullable Object item, CharSequence charSequence);
     }
 }

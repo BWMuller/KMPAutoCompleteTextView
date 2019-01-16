@@ -25,42 +25,55 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        List<String> data = new ArrayList<String>();
-        data.add("Red roses for wedding");
-        data.add("Bouquet with red roses");
-        data.add("Single red rose flower");
-        data.add("Red roses for wedding");
-        data.add("Bouquet with red roses");
-        data.add("Single red rose flower");
+        List<Object> data = new ArrayList<Object>();
+        data.add(new ItemModel("Red roses for wedding"));
+        data.add(new ItemModel("Bouquet with red roses"));
+        data.add(new ItemModel("Single red rose flower"));
+        data.add(new ItemModel("Red roses for wedding"));
+        data.add(new ItemModel("Bouquet with red roses"));
+        data.add(new ItemModel("Single red rose flower"));
 
         final KMPAutoComplTextView complTextView = (KMPAutoComplTextView) findViewById(R.id.tvAutoCompl);
         complTextView.setDatas(data);
         complTextView.setShowCurrentTextAsOption(true);
         complTextView.setOnPopupItemClickListener(new KMPAutoComplTextView.OnPopupItemClickListener() {
             @Override
-            public void onPopupItemClick(CharSequence charSequence) {
-                Toast.makeText(MainActivity.this, charSequence.toString(), Toast.LENGTH_SHORT).show();
+            public void onPopupItemClick(Object item, CharSequence charSequence) {
+                Toast.makeText(MainActivity.this, "Item available: "+ (item != null) + " " + charSequence.toString(), Toast.LENGTH_SHORT).show();
             }
         });
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                List<String> data = new ArrayList<String>();
-                data.add("Black roses for funerals");
-                data.add("Bouquet without red roses");
-                data.add("Single red rose flower");
-                data.add("Single red rose bouquets");
-                data.add("Single red rose flower pots");
-                data.add("Black roses for funerals");
-                data.add("Bouquet without red roses");
-                data.add("Single red rose flower");
-                data.add("Single red rose bouquets");
-                data.add("Single red rose flower pots");
+                List<Object> data = new ArrayList<Object>();
+                data.add(new ItemModel("Black roses for funerals"));
+                data.add(new ItemModel("Bouquet without red roses"));
+                data.add(new ItemModel("Single red rose flower"));
+                data.add(new ItemModel("Single red rose bouquets"));
+                data.add(new ItemModel("Single red rose flower pots"));
+                data.add(new ItemModel("Black roses for funerals"));
+                data.add(new ItemModel("Bouquet without red roses"));
+                data.add(new ItemModel("Single red rose flower"));
+                data.add(new ItemModel("Single red rose bouquets"));
+                data.add(new ItemModel("Single red rose flower pots"));
                 ((KMPAdapter) complTextView.getAdapter()).addAll(data);
             }
         }, 30000);
 
     }
 
+
+    class ItemModel {
+        private String item;
+
+        public ItemModel(String item) {
+            this.item = item;
+        }
+
+        @Override
+        public String toString() {
+            return item;
+        }
+    }
 }
