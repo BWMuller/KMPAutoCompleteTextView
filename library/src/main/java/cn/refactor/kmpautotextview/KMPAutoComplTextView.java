@@ -15,6 +15,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Filterable;
 import android.widget.ListAdapter;
 
+import androidx.appcompat.widget.AppCompatAutoCompleteTextView;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +25,7 @@ import java.util.List;
  * 邮箱 : andyxialm@gmail.com
  * 描述 : 实现KMP算法的AutoCompleteTextView, 用于字符串模糊匹配
  */
-public class KMPAutoComplTextView extends AutoCompleteTextView {
+public class KMPAutoComplTextView extends AppCompatAutoCompleteTextView {
 
     private static final int DEFAULT_HIGHLIGHT = Color.parseColor("#FF4081");
     private static final int DEFAULT_TEXTCOLOR = Color.parseColor("#80000000");
