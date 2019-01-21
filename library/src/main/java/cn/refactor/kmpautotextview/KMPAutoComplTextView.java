@@ -205,6 +205,7 @@ public class KMPAutoComplTextView extends AutoCompleteTextView {
 
         mAdapter.clear();
         mAdapter.addAllItems(newDataStrings);
+        mAdapter.notifyDataSetChanged();
     }
 
     public boolean isShowCurrentTextAsOption() {
